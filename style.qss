@@ -18,7 +18,8 @@ QLabel {
 }
 
 QToolButton,
-QCheckBox {
+QCheckBox,
+QSpinBox {
   min-height: 32px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 46);
@@ -28,7 +29,8 @@ QCheckBox {
 }
 
 QToolButton:hover,
-QCheckBox:hover {
+QCheckBox:hover,
+QSpinBox:hover {
   background: rgba(24, 176, 107, 110);
 }
 
@@ -48,4 +50,10 @@ QSlider::handle:horizontal {
   margin: -6px 0;
   border-radius: 8px;
   background: #18b06b;
+}
+
+QSpinBox::up-button,
+QSpinBox::down-button {
+  width: 0;
+  border: none;
 }

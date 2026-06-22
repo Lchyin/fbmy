@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt, QTimer, QUrl
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWidgets import (
@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QSlider,
+    QSpinBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -39,9 +40,18 @@ class FenbiBrowser(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
         self._drag_position = None
+        self._normal_geometry = None
+        self._normal_minimum_size = self.minimumSize()
+        self._auto_hidden = False
+        self._auto_hide_enabled = True
+        self._hide_timer = QTimer(self)
+        self._hide_timer.setSingleShot(True)
+        self._hide_timer.timeout.connect(self._collapse_for_moyu)
+
         self.browser = QWebEngineView(self)
         self.browser.setUrl(QUrl(HOME_URL))
 
+        self._hide_when_collapsed = []
         self.toolbar = self._build_toolbar()
         container = QWidget(self)
         layout = QVBoxLayout(container)
@@ -66,30 +76,58 @@ class FenbiBrowser(QMainWindow):
         brand.setObjectName("brand")
         layout.addWidget(brand, 1)
 
-        self._add_button(layout, "←", self.browser.back, "后退")
-        self._add_button(layout, "→", self.browser.forward, "前进")
-        self._add_button(layout, "粉笔", lambda: self.browser.setUrl(QUrl(HOME_URL)), "打开粉笔网")
-        self._add_button(layout, "刷新", self.browser.reload, "刷新")
-        self._add_button(layout, "居中", self._center_on_screen, "居中窗口")
+        self._track_control(self._add_button(layout, "←", self.browser.back, "后退"))
+        self._track_control(self._add_button(layout, "→", self.browser.forward, "前进"))
+        self._track_control(self._add_button(layout, "粉笔", lambda: self.browser.setUrl(QUrl(HOME_URL)), "打开粉笔网"))
+        self._track_control(self._add_button(layout, "刷新", self.browser.reload, "刷新"))
+        self._track_control(self._add_button(layout, "居中", self._center_on_screen, "居中窗口"))
 
-        self.top_button = self._add_button(layout, "置顶", self._toggle_always_on_top, "置顶窗口")
+        self.top_button = self._track_control(self._add_button(layout, "置顶", self._toggle_always_on_top, "置顶窗口"))
 
-        layout.addWidget(QLabel("透明度", toolbar))
-        opacity = QSlider(Qt.Horizontal, toolbar)
+        width_label = self._track_control(QLabel("宽", toolbar))
+        layout.addWidget(width_label)
+        self.width_spin = self._track_control(QSpinBox(toolbar))
+        self.width_spin.setRange(320, 3840)
+        self.width_spin.setValue(self.width())
+        self.width_spin.setFixedWidth(76)
+        layout.addWidget(self.width_spin)
+
+        height_label = self._track_control(QLabel("高", toolbar))
+        layout.addWidget(height_label)
+        self.height_spin = self._track_control(QSpinBox(toolbar))
+        self.height_spin.setRange(120, 2160)
+        self.height_spin.setValue(self.height())
+        self.height_spin.setFixedWidth(76)
+        layout.addWidget(self.height_spin)
+        self.width_spin.valueChanged.connect(self._apply_size_controls)
+        self.height_spin.valueChanged.connect(self._apply_size_controls)
+
+        opacity_label = self._track_control(QLabel("透明度", toolbar))
+        layout.addWidget(opacity_label)
+        opacity = self._track_control(QSlider(Qt.Horizontal, toolbar))
         opacity.setRange(MIN_OPACITY, MAX_OPACITY)
         opacity.setValue(DEFAULT_OPACITY)
         opacity.setFixedWidth(120)
         opacity.valueChanged.connect(lambda value: self.setWindowOpacity(value / 100))
         layout.addWidget(opacity)
 
-        self.click_through = QCheckBox("穿透", toolbar)
+        self.auto_hide = self._track_control(QCheckBox("离开隐藏", toolbar))
+        self.auto_hide.setChecked(True)
+        self.auto_hide.toggled.connect(self._set_auto_hide)
+        layout.addWidget(self.auto_hide)
+
+        self.click_through = self._track_control(QCheckBox("穿透", toolbar))
         self.click_through.toggled.connect(self._toggle_click_through)
         layout.addWidget(self.click_through)
 
-        self._add_button(layout, "隐藏", self.showMinimized, "最小化")
+        self._track_control(self._add_button(layout, "隐藏", self._toggle_visible, "隐藏为小条"))
         close_button = self._add_button(layout, "退出", QApplication.instance().quit, "退出")
         close_button.setObjectName("danger")
         return toolbar
+
+    def _track_control(self, widget):
+        self._hide_when_collapsed.append(widget)
+        return widget
 
     def _add_button(self, layout: QHBoxLayout, text: str, callback, tooltip: str) -> QToolButton:
         button = QToolButton(self)
@@ -106,18 +144,26 @@ class FenbiBrowser(QMainWindow):
         QShortcut(QKeySequence("Meta+Shift+Q"), self, activated=QApplication.instance().quit)
 
     def _toggle_visible(self) -> None:
-        if self.isVisible() and not self.isMinimized():
-            self.showMinimized()
+        if self._auto_hidden:
+            self._restore_from_moyu()
             return
-        self.showNormal()
-        self.activateWindow()
-        self.raise_()
+        self._collapse_for_moyu()
 
     def _toggle_always_on_top(self) -> None:
         enabled = not bool(self.windowFlags() & Qt.WindowStaysOnTopHint)
         self.setWindowFlag(Qt.WindowStaysOnTopHint, enabled)
         self.show()
         self.top_button.setText("已置顶" if enabled else "置顶")
+
+    def _set_auto_hide(self, enabled: bool) -> None:
+        self._auto_hide_enabled = enabled
+        if not enabled and self._auto_hidden:
+            self._restore_from_moyu()
+
+    def _apply_size_controls(self) -> None:
+        if self._auto_hidden:
+            return
+        self.resize(self.width_spin.value(), self.height_spin.value())
 
     def _toggle_click_through(self, enabled: bool) -> None:
         if enabled:
@@ -129,9 +175,61 @@ class FenbiBrowser(QMainWindow):
     def _center_on_screen(self) -> None:
         screen = QApplication.primaryScreen().availableGeometry()
         self.resize(round(screen.width() * 0.72), round(screen.height() * 0.76))
+        self._sync_size_controls()
         frame = self.frameGeometry()
         frame.moveCenter(screen.center())
         self.move(frame.topLeft())
+
+    def _sync_size_controls(self) -> None:
+        self.width_spin.blockSignals(True)
+        self.height_spin.blockSignals(True)
+        self.width_spin.setValue(self.width())
+        self.height_spin.setValue(self.height())
+        self.width_spin.blockSignals(False)
+        self.height_spin.blockSignals(False)
+
+    def _collapse_for_moyu(self) -> None:
+        if self._auto_hidden:
+            return
+        self._normal_geometry = self.geometry()
+        self.browser.setVisible(False)
+        for widget in self._hide_when_collapsed:
+            widget.setVisible(False)
+        self.setMinimumSize(1, 1)
+        self.toolbar.setFixedHeight(36)
+        self.resize(220, 36)
+        self.setWindowOpacity(0.18)
+        self._auto_hidden = True
+
+    def _restore_from_moyu(self) -> None:
+        self._hide_timer.stop()
+        if not self._auto_hidden:
+            return
+        self._auto_hidden = False
+        self.setMinimumSize(self._normal_minimum_size)
+        self.toolbar.setFixedHeight(72)
+        for widget in self._hide_when_collapsed:
+            widget.setVisible(True)
+        self.browser.setVisible(True)
+        if self._normal_geometry is not None:
+            self.setGeometry(self._normal_geometry)
+        self.setWindowOpacity(DEFAULT_OPACITY / 100)
+        self._sync_size_controls()
+        self.raise_()
+
+    def enterEvent(self, event) -> None:
+        self._restore_from_moyu()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event) -> None:
+        if self._auto_hide_enabled and not self._auto_hidden:
+            self._hide_timer.start(650)
+        super().leaveEvent(event)
+
+    def resizeEvent(self, event) -> None:
+        if not self._auto_hidden and hasattr(self, "width_spin"):
+            self._sync_size_controls()
+        super().resizeEvent(event)
 
     def mousePressEvent(self, event) -> None:
         if event.button() == Qt.LeftButton and event.position().y() <= self.toolbar.height():
