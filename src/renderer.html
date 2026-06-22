@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>粉笔摸鱼浏览器</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="toolbar" id="toolbar">
+      <section class="brand">
+        <span class="logo">粉</span>
+        <div>
+          <h1>粉笔摸鱼浏览器</h1>
+          <p>透明窗口 · 老板键 · 专注刷题</p>
+        </div>
+      </section>
+
+      <nav class="actions" aria-label="浏览控制">
+        <button data-action="back" title="后退">←</button>
+        <button data-action="forward" title="前进">→</button>
+        <button data-action="home" title="打开粉笔网">粉笔</button>
+        <button data-action="reload" title="刷新">刷新</button>
+        <button data-action="fit" title="适配屏幕">居中</button>
+        <button data-action="top" id="topButton" title="置顶窗口">置顶</button>
+        <label class="opacity">
+          <span>透明度</span>
+          <input id="opacityRange" type="range" min="0.2" max="1" step="0.02" value="0.88" />
+        </label>
+        <label class="check">
+          <input id="clickThrough" type="checkbox" />
+          <span>穿透</span>
+        </label>
+        <button data-action="minimize" title="最小化">隐藏</button>
+        <button data-action="close" class="danger" title="退出">退出</button>
+      </nav>
+    </header>
+
+    <aside class="tips" id="tips">
+      <strong>快捷键</strong>
+      <span>Ctrl/⌘ + Shift + H：隐藏/恢复</span>
+      <span>Ctrl/⌘ + Shift + Q：退出</span>
+      <span>鼠标离开顶部工具栏会自动弱化窗口</span>
+    </aside>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
