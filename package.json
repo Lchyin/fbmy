@@ -1,0 +1,21 @@
+{
+  "name": "fbmy",
+  "version": "0.1.0",
+  "description": "A discreet desktop browser for Fenbi, inspired by Moyu Read.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check src/main.js && node --check src/preload.js"
+  },
+  "keywords": [
+    "fenbi",
+    "browser",
+    "electron",
+    "moyu"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^31.7.7"
+  }
+}
