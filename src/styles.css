@@ -1,0 +1,129 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --panel: rgba(15, 23, 42, 0.72);
+  --panel-light: rgba(255, 255, 255, 0.72);
+  --accent: #18b06b;
+  --danger: #ef4444;
+  --text: #f8fafc;
+  --muted: #cbd5e1;
+}
+
+* { box-sizing: border-box; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+}
+
+.toolbar {
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 72px;
+  padding: 10px 14px;
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(5, 46, 22, 0.82), var(--panel));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(16px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 230px;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #052e16;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+h1,
+p { margin: 0; }
+
+h1 { font-size: 17px; }
+
+p {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.actions {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+button,
+.check,
+.opacity {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  color: var(--text);
+  min-height: 34px;
+  padding: 0 13px;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+button:hover,
+button.active {
+  transform: translateY(-1px);
+  background: rgba(24, 176, 107, 0.42);
+}
+
+button.danger:hover { background: rgba(239, 68, 68, 0.7); }
+
+.opacity,
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.opacity input { width: 110px; }
+
+.tips {
+  position: fixed;
+  right: 16px;
+  top: 88px;
+  display: grid;
+  gap: 6px;
+  max-width: 280px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  color: #0f172a;
+  background: var(--panel-light);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(14px);
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.tips strong { color: #064e3b; }
