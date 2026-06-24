@@ -19,7 +19,7 @@ QLabel {
 
 QToolButton,
 QCheckBox,
-QSpinBox {
+QLineEdit {
   min-height: 32px;
   padding: 0 12px;
   border: 1px solid rgba(255, 255, 255, 46);
@@ -30,7 +30,7 @@ QSpinBox {
 
 QToolButton:hover,
 QCheckBox:hover,
-QSpinBox:hover {
+QLineEdit:hover {
   background: rgba(24, 176, 107, 110);
 }
 
@@ -52,8 +52,7 @@ QSlider::handle:horizontal {
   background: #18b06b;
 }
 
-QSpinBox::up-button,
-QSpinBox::down-button {
-  width: 0;
-  border: none;
+QLineEdit#addressBar {
+  min-width: 220px;
+  border-radius: 10px;
 }
